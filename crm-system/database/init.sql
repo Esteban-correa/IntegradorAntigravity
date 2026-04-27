@@ -1,0 +1,13 @@
+DROP TABLE IF EXISTS user_events CASCADE;
+DROP TABLE IF EXISTS customers CASCADE;
+DROP TABLE IF EXISTS users CASCADE;
+
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    role VARCHAR(20) NOT NULL
+);
+
+INSERT INTO users (email, password, role) 
+VALUES ('admin@crm.local', '$2a$10$8.06qKPTp5EEn3wNnXMGo.6p66.pZ9O.L.E.P4.P.81.L0.w.L0.w', 'ADMIN');

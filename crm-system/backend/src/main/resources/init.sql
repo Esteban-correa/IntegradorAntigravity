@@ -1,0 +1,26 @@
+CREATE TABLE IF NOT EXISTS users (
+  id SERIAL PRIMARY KEY,
+  email VARCHAR(100) UNIQUE NOT NULL,
+  password TEXT NOT NULL,
+  role VARCHAR(20) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS customers (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(100) NOT NULL,
+  email VARCHAR(100) UNIQUE,
+  status VARCHAR(20) DEFAULT 'LEAD',
+  revenue DECIMAL(10, 2) DEFAULT 0.0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS user_events (
+  id SERIAL PRIMARY KEY,
+  user_id INT REFERENCES users(id),
+  event_type VARCHAR(50) NOT NULL,
+  event_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Seed basic data
+INSERT INTO users (email, password, role) VALUES ('admin@crm.local', '$2a$10$tZ2R/zV./SjF.S5G0a5JzO5Lz/nLzZ.z.z/zV.z.z.z.z.z.z', 'ADMIN') ON CONFLICT (email) DO NOTHING;
