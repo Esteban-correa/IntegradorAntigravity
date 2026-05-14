@@ -1,13 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { campanasService } from '../api/campanasService';
-import { Edit2, Trash2, Plus, X, Calendar } from 'lucide-react';
+import { 
+  Plus, Search, Calendar, ChevronDown, MoreHorizontal, 
+  ChevronLeft, ChevronRight, Filter, Columns 
+} from 'lucide-react';
+import '../campaigns.css';
 
 export default function Campanas() {
   const [campanas, setCampanas] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
   
-  // Modal State
+  // Modal State for CRUD
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [currentId, setCurrentId] = useState(null);
@@ -20,7 +25,6 @@ export default function Campanas() {
     fecha_fin: '',
     presupuesto: 0
   });
-  const [formError, setFormError] = useState('');
 
   const fetchCampanas = async () => {
     try {
@@ -39,7 +43,6 @@ export default function Campanas() {
   }, []);
 
   const handleOpenModal = (campana = null) => {
-    setFormError('');
     if (campana) {
       setIsEditing(true);
       setCurrentId(campana.id);
@@ -53,13 +56,7 @@ export default function Campanas() {
     } else {
       setIsEditing(false);
       setCurrentId(null);
-      setFormData({ 
-        nombre: '', 
-        descripcion: '', 
-        fecha_inicio: '', 
-        fecha_fin: '', 
-        presupuesto: 0 
-      });
+      setFormData({ nombre: '', descripcion: '', fecha_inicio: '', fecha_fin: '', presupuesto: 0 });
     }
     setIsModalOpen(true);
   };
@@ -70,15 +67,6 @@ export default function Campanas() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.nombre.trim()) {
-      setFormError("El nombre de la campaña es obligatorio.");
-      return;
-    }
-    if (formData.presupuesto < 0) {
-      setFormError("El presupuesto no puede ser negativo.");
-      return;
-    }
-
     try {
       if (isEditing) {
         await campanasService.updateCampana(currentId, formData);
@@ -88,7 +76,7 @@ export default function Campanas() {
       handleCloseModal();
       fetchCampanas();
     } catch (err) {
-      setFormError("Error guardando campaña: " + err.message);
+      console.error("Error saving campaign:", err);
     }
   };
 
@@ -98,152 +86,174 @@ export default function Campanas() {
       await campanasService.deleteCampana(id);
       fetchCampanas();
     } catch (err) {
-      setErrorMsg("Error eliminando campaña: " + err.message);
+      console.error("Error deleting campaign:", err);
     }
   };
 
   const formatCurrency = (amount) => {
     return Number(amount).toLocaleString('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2
-    });
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).replace(/,/g, '.'); // Match screenshot dot separator $10.000
   };
 
-  if (isLoading) return <div style={{ padding: '2rem', textAlign: 'center' }}><h2>Cargando campañas...</h2></div>;
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
+
+  if (isLoading) return <div className="campaigns-container"><h2>Cargando Campañas...</h2></div>;
 
   return (
-    <div className="animate-fade-in" style={{ padding: '24px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-        <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>Gestión de Campañas</h2>
-        <button className="btn" onClick={() => handleOpenModal()} style={{ width: 'auto', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Plus size={18} /> Crear Campaña
-        </button>
+    <div className="campaigns-container animate-fade-in">
+      {/* Top Nav Tabs */}
+      <div className="campaigns-top-nav">
+        <div className="top-nav-item">Ads</div>
+        <div className="top-nav-item">Email</div>
+        <div className="top-nav-item">Social Media</div>
+        <div className="top-nav-item">Website</div>
+        <div className="top-nav-item active">Campaign</div>
+        <div className="top-nav-item">Lead Capture</div>
       </div>
 
-      {errorMsg && <div style={{ padding: '16px', backgroundColor: 'var(--danger)', color: 'white', borderRadius: '8px', marginBottom: '24px' }}>{errorMsg}</div>}
+      {/* Header Section */}
+      <div className="campaigns-header">
+        <h1>Campaign</h1>
+        <div className="header-actions">
+          <button className="btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Columns size={18} /> Manage Column
+          </button>
+          <button className="btn-orange" onClick={() => handleOpenModal()}>
+            Create Campaign
+          </button>
+        </div>
+      </div>
 
-      <div className="kpi-card" style={{ padding: 0, overflow: 'hidden' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-          <thead style={{ backgroundColor: 'var(--surface-hover)', borderBottom: '1px solid var(--border)' }}>
+      {/* Filters Section */}
+      <div className="campaigns-filters">
+        <div className="filter-group">
+          <div className="filter-dropdown">
+            <Calendar size={16} /> Date created <ChevronDown size={14} />
+          </div>
+          <div className="filter-dropdown">
+             Campaign owner <ChevronDown size={14} />
+          </div>
+          <div className="filter-dropdown">
+             Budget range <ChevronDown size={14} />
+          </div>
+        </div>
+      </div>
+
+      {/* Campaign Card */}
+      <div className="campaign-card">
+        <div className="card-top">
+          <div className="search-wrapper">
+            <Search className="search-icon" size={18} />
+            <input 
+              type="text" 
+              placeholder="Search campaign" 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <div className="showing-info">
+            Showing <select style={{ border: 'none', background: 'none', fontWeight: 600 }}><option>7</option></select> of {campanas.length} results
+          </div>
+        </div>
+
+        <table className="campaign-table">
+          <thead>
             <tr>
-              <th style={{ padding: '16px', fontWeight: '600' }}>Nombre</th>
-              <th style={{ padding: '16px', fontWeight: '600' }}>Descripción</th>
-              <th style={{ padding: '16px', fontWeight: '600' }}>Duración</th>
-              <th style={{ padding: '16px', fontWeight: '600' }}>Presupuesto</th>
-              <th style={{ padding: '16px', fontWeight: '600' }}>Acciones</th>
+              <th style={{ width: '40px' }}><input type="checkbox" /></th>
+              <th>CAMPAIGN NAME <ChevronDown size={12} style={{ display: 'inline', marginLeft: '4px' }}/></th>
+              <th>OWNER <ChevronDown size={12} style={{ display: 'inline', marginLeft: '4px' }}/></th>
+              <th>GOALS <ChevronDown size={12} style={{ display: 'inline', marginLeft: '4px' }}/></th>
+              <th>BUDGET <ChevronDown size={12} style={{ display: 'inline', marginLeft: '4px' }}/></th>
+              <th>DATE CREATED <ChevronDown size={12} style={{ display: 'inline', marginLeft: '4px' }}/></th>
+              <th style={{ width: '100px' }}>ACTIONS</th>
             </tr>
           </thead>
           <tbody>
-            {campanas.length === 0 ? (
-               <tr><td colSpan="5" style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)' }}>No hay campañas registradas.</td></tr>
-            ) : (
-              campanas.map((campana) => (
-                <tr key={campana.id} style={{ borderBottom: '1px solid var(--border)' }}>
-                  <td style={{ padding: '16px', fontWeight: '500' }}>{campana.nombre}</td>
-                  <td style={{ padding: '16px', color: 'var(--text-muted)', maxWidth: '200px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {campana.descripcion || '-'}
-                  </td>
-                  <td style={{ padding: '16px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.875rem' }}>
-                      <Calendar size={14} color="var(--text-muted)" />
-                      {campana.fecha_inicio ? new Date(campana.fecha_inicio).toLocaleDateString() : 'N/A'} - {campana.fecha_fin ? new Date(campana.fecha_fin).toLocaleDateString() : 'N/A'}
-                    </div>
-                  </td>
-                  <td style={{ padding: '16px', fontWeight: '600', color: 'var(--success)' }}>
-                    {formatCurrency(campana.presupuesto)}
-                  </td>
-                  <td style={{ padding: '16px' }}>
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      <button className="icon-button" onClick={() => handleOpenModal(campana)} aria-label="Editar">
-                        <Edit2 size={18} />
-                      </button>
-                      <button className="icon-button" onClick={() => handleDelete(campana.id)} style={{ color: 'var(--danger)' }} aria-label="Eliminar">
-                        <Trash2 size={18} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            )}
+            {campanas.map((campana) => (
+              <tr key={campana.id}>
+                <td><input type="checkbox" /></td>
+                <td style={{ fontWeight: 600 }}>{campana.nombre}</td>
+                <td>
+                  <div className="owner-cell">
+                    <div className="owner-avatar"></div>
+                    <span>Darlene Robertson</span> {/* Mocked Owner */}
+                  </div>
+                </td>
+                <td style={{ fontWeight: 500 }}>$100.000</td> {/* Mocked Goal */}
+                <td style={{ fontWeight: 500 }}>${formatCurrency(campana.presupuesto)}</td>
+                <td>
+                  <div className="date-cell">
+                    <Calendar size={14} color="#9CA3AF" />
+                    {formatDate(campana.fecha_inicio)}
+                  </div>
+                </td>
+                <td style={{ textAlign: 'right' }}>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button onClick={() => handleOpenModal(campana)} style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#4F46E5' }}>Edit</button>
+                    <button onClick={() => handleDelete(campana.id)} style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#EF4444' }}>Del</button>
+                  </div>
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
+
+        {/* Pagination */}
+        <div className="pagination">
+          <button className="page-btn disabled"><ChevronLeft size={16} /></button>
+          <button className="page-btn active">1</button>
+          <button className="page-btn">2</button>
+          <button className="page-btn"><ChevronRight size={16} /></button>
+        </div>
       </div>
 
       {/* Modal */}
       {isModalOpen && (
         <div style={{
           position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50
+          backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100
         }}>
-          <div className="auth-card" style={{ position: 'relative', width: '100%', maxWidth: '500px' }}>
-            <button className="icon-button" onClick={handleCloseModal} style={{ position: 'absolute', top: '16px', right: '16px' }}>
-              <X size={20} />
-            </button>
-            <h3 style={{ marginBottom: '24px', fontSize: '1.25rem' }}>{isEditing ? 'Editar Campaña' : 'Nueva Campaña'}</h3>
-            
-            {formError && <div style={{ color: 'var(--danger)', marginBottom: '16px', fontSize: '0.875rem' }}>{formError}</div>}
-            
+          <div className="report-section-card" style={{ width: '100%', maxWidth: '500px', background: 'white', padding: '32px', borderRadius: '16px' }}>
+            <h3 style={{ marginBottom: '24px' }}>{isEditing ? 'Editar Campaña' : 'Nueva Campaña'}</h3>
             <form onSubmit={handleSubmit}>
-              <div className="form-group">
-                <label>Nombre de la Campaña *</label>
+              <div className="form-group" style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>Nombre</label>
                 <input 
                   type="text" 
                   value={formData.nombre} 
+                  className="ai-input"
                   onChange={(e) => setFormData({...formData, nombre: e.target.value})}
-                  placeholder="Ej. Promoción Verano 2026"
                   required 
                 />
               </div>
-              <div className="form-group">
-                <label>Descripción</label>
-                <textarea 
-                  value={formData.descripcion} 
-                  onChange={(e) => setFormData({...formData, descripcion: e.target.value})}
-                  rows="3"
-                  style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--border)', backgroundColor: 'var(--bg-color)', color: 'var(--text-main)', resize: 'vertical' }}
-                  placeholder="Detalles sobre esta campaña..."
-                />
-              </div>
-              
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                <div className="form-group">
-                  <label>Fecha de Inicio</label>
-                  <input 
-                    type="date" 
-                    value={formData.fecha_inicio} 
-                    onChange={(e) => setFormData({...formData, fecha_inicio: e.target.value})}
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Fecha de Fin</label>
-                  <input 
-                    type="date" 
-                    value={formData.fecha_fin} 
-                    onChange={(e) => setFormData({...formData, fecha_fin: e.target.value})}
-                  />
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label>Presupuesto ($) *</label>
+              <div className="form-group" style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>Presupuesto</label>
                 <input 
                   type="number" 
-                  step="0.01"
-                  min="0"
                   value={formData.presupuesto} 
+                  className="ai-input"
                   onChange={(e) => setFormData({...formData, presupuesto: parseFloat(e.target.value) || 0})}
                   required 
                 />
               </div>
-              
-              <div style={{ display: 'flex', gap: '12px', marginTop: '32px' }}>
-                <button type="button" className="btn" onClick={handleCloseModal} style={{ backgroundColor: 'var(--surface-hover)', color: 'var(--text-main)', border: '1px solid var(--border)' }}>
-                  Cancelar
-                </button>
-                <button type="submit" className="btn">
-                  {isEditing ? 'Guardar Cambios' : 'Crear'}
-                </button>
+              <div className="form-group" style={{ marginBottom: '24px' }}>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>Fecha Inicio</label>
+                <input 
+                  type="date" 
+                  value={formData.fecha_inicio} 
+                  className="ai-input"
+                  onChange={(e) => setFormData({...formData, fecha_inicio: e.target.value})}
+                />
+              </div>
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <button type="button" onClick={handleCloseModal} className="btn-outline">Cancelar</button>
+                <button type="submit" className="btn-orange">Guardar</button>
               </div>
             </form>
           </div>
@@ -252,3 +262,5 @@ export default function Campanas() {
     </div>
   );
 }
+
+

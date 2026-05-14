@@ -1,7 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { reportesService } from '../api/reportesService';
-import { Download, PieChart as PieChartIcon } from 'lucide-react';
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { 
+  Users, DollarSign, Briefcase, Plus, Search, MoreHorizontal, 
+  ChevronRight, Calendar, Sparkles, MessageSquare, Zap, Clock, Send 
+} from 'lucide-react';
+import { 
+  ScatterChart, Scatter, XAxis, YAxis, ZAxis, Tooltip, 
+  ResponsiveContainer, Cell 
+} from 'recharts';
+import '../reports.css';
 
 export default function Reportes() {
   const [data, setData] = useState({
@@ -10,7 +17,7 @@ export default function Reportes() {
     campanas: []
   });
   const [isLoading, setIsLoading] = useState(true);
-  const [errorMsg, setErrorMsg] = useState('');
+  const [activeTab, setActiveTab] = useState('Priority');
 
   const fetchReportData = async () => {
     try {
@@ -20,10 +27,9 @@ export default function Reportes() {
         reportesService.getOportunidades(),
         reportesService.getCampanas()
       ]);
-      
       setData({ clientes, oportunidades, campanas });
     } catch (err) {
-      setErrorMsg("Error cargando reporte: " + err.message);
+      console.error("Error cargando reporte:", err);
     } finally {
       setIsLoading(false);
     }
@@ -34,168 +40,279 @@ export default function Reportes() {
   }, []);
 
   const totalClientes = data.clientes.length;
-  const clientesActivos = data.clientes.filter(c => c.estado === 'cliente').length;
-  const oportunidadesAbiertas = data.oportunidades.filter(o => o.estado === 'abierta').length;
-  const ventasGanadas = data.oportunidades
+  const totalRevenue = data.oportunidades
     .filter(o => o.estado === 'ganada')
     .reduce((acc, curr) => acc + (Number(curr.valor) || 0), 0);
+  const totalProjects = data.campanas.length;
 
-  // Grouping Clientes por Estado para gráfica
-  const clientesPorEstado = data.clientes.reduce((acc, c) => {
-    const estado = c.estado || 'desconocido';
-    acc[estado] = (acc[estado] || 0) + 1;
-    return acc;
-  }, {});
-  const dataPieClientes = Object.keys(clientesPorEstado).map(key => ({
-    name: key.toUpperCase(),
-    value: clientesPorEstado[key]
-  }));
+  // Mock comparison values for UI aesthetics
+  const clientComp = 10;
+  const revenueComp = 3720;
+  const projectComp = 16;
 
-  // Grouping Oportunidades por Estado para gráfica
-  const oportunidadesPorEstado = data.oportunidades.reduce((acc, o) => {
-    const estado = o.estado || 'desconocido';
-    acc[estado] = (acc[estado] || 0) + 1;
-    return acc;
-  }, {});
-  const dataBarOportunidades = Object.keys(oportunidadesPorEstado).map(key => ({
-    name: key.toUpperCase(),
-    cantidad: oportunidadesPorEstado[key]
-  }));
-
-  const exportToCSV = () => {
-    let csvContent = "data:text/csv;charset=utf-8,";
-    
-    // Header
-    csvContent += "REPORTES GENERALES\n\n";
-    
-    // Resumen
-    csvContent += "Metrica,Valor\n";
-    csvContent += `Total Clientes,${totalClientes}\n`;
-    csvContent += `Clientes Activos,${clientesActivos}\n`;
-    csvContent += `Oportunidades Abiertas,${oportunidadesAbiertas}\n`;
-    csvContent += `Ventas Ganadas,${ventasGanadas}\n\n`;
-
-    // Data detallada (Muestra de Oportunidades)
-    csvContent += "OPORTUNIDADES DETALLE\n";
-    csvContent += "ID,Titulo,Estado,Valor\n";
-    data.oportunidades.forEach(op => {
-       const row = `${op.id},"${op.titulo || 'N/A'}","${op.estado || 'N/A'}",${op.valor || 0}`;
-       csvContent += row + "\n";
-    });
-
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `Reporte_CRM_${new Date().toISOString().slice(0,10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
+  // Mock data for the "Revenue Analytics" dot plot
+  const chartData = [
+    { x: 1, y: 50, z: 10, type: 'actual' },
+    { x: 2, y: 80, z: 12, type: 'actual' },
+    { x: 3, y: 60, z: 8, type: 'actual' },
+    { x: 4, y: 120, z: 15, type: 'actual' },
+    { x: 5, y: 100, z: 10, type: 'actual' },
+    { x: 6, y: 180, z: 20, type: 'actual' },
+    { x: 7, y: 150, z: 15, type: 'actual' },
+    { x: 8, y: 220, z: 25, type: 'projected' }, // Highlighted point
+    { x: 9, y: 130, z: 12, type: 'actual' },
+    { x: 10, y: 90, z: 10, type: 'actual' },
+    { x: 11, y: 160, z: 18, type: 'actual' },
+    { x: 12, y: 240, z: 22, type: 'actual' },
+  ];
 
   const formatCurrency = (amount) => {
-    return Number(amount).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+    return Number(amount).toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 });
   };
 
-  const COLORS = ['#4F46E5', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
-
-  if (isLoading) return <div style={{ padding: '2rem', textAlign: 'center' }}><h2>Generando reportes...</h2></div>;
+  if (isLoading) return <div className="reports-container"><h2>Generando Reportes LoopAI...</h2></div>;
 
   return (
-    <div className="animate-fade-in" style={{ padding: '24px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-        <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>Centro de Reportes</h2>
-        <button onClick={exportToCSV} className="btn" style={{ width: 'auto', display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: 'var(--success)' }}>
-          <Download size={18} /> Exportar CSV
-        </button>
-      </div>
-
-      {errorMsg && <div style={{ padding: '16px', backgroundColor: 'var(--danger)', color: 'white', borderRadius: '8px', marginBottom: '24px' }}>{errorMsg}</div>}
-
-      <div className="kpi-grid">
-        <div className="kpi-card">
-          <div className="kpi-title">Total Clientes Historico</div>
-          <div className="kpi-value">{totalClientes.toLocaleString()}</div>
-        </div>
-        <div className="kpi-card">
-          <div className="kpi-title">Clientes Activos</div>
-          <div className="kpi-value">{clientesActivos.toLocaleString()}</div>
-        </div>
-        <div className="kpi-card">
-          <div className="kpi-title">Oportunidades Abiertas</div>
-          <div className="kpi-value">{oportunidadesAbiertas.toLocaleString()}</div>
-        </div>
-        <div className="kpi-card" style={{ borderBottom: '4px solid var(--success)' }}>
-          <div className="kpi-title">Ventas Ganadas Ponderadas</div>
-          <div className="kpi-value">{formatCurrency(ventasGanadas)}</div>
-        </div>
-      </div>
-
-      <div className="charts-grid" style={{ gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '32px' }}>
-        <div className="chart-card">
-          <h3 className="chart-header" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <PieChartIcon size={20} color="var(--primary)"/> Dist. Clientes por Estado
-          </h3>
-          <div style={{ width: '100%', height: 300 }}>
-            {dataPieClientes.length > 0 ? (
-              <ResponsiveContainer>
-                <PieChart>
-                  <Pie data={dataPieClientes} cx="50%" cy="50%" labelLine={false} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} outerRadius={100} fill="#8884d8" dataKey="value">
-                    {dataPieClientes.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
-                  </Pie>
-                  <Tooltip contentStyle={{ borderRadius: '8px', backgroundColor: '#1F2937', color: '#fff', border: 'none' }} />
-                </PieChart>
-              </ResponsiveContainer>
-            ) : <p style={{ textAlign: 'center', color: 'var(--text-muted)' }}>No hay datos suficientes</p>}
-          </div>
-        </div>
-
-        <div className="chart-card">
-          <h3 className="chart-header">Volumen de Oportunidades</h3>
-          <div style={{ width: '100%', height: 300 }}>
-             {dataBarOportunidades.length > 0 ? (
-               <ResponsiveContainer>
-                 <BarChart data={dataBarOportunidades} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
-                   <XAxis dataKey="name" stroke="var(--text-muted)" />
-                   <YAxis stroke="var(--text-muted)" allowDecimals={false} />
-                   <Tooltip contentStyle={{ borderRadius: '8px', backgroundColor: '#1F2937', color: '#fff', border: 'none' }} cursor={{fill: 'var(--surface-hover)'}}/>
-                   <Bar dataKey="cantidad" fill="var(--primary)" radius={[4, 4, 0, 0]} />
-                 </BarChart>
-               </ResponsiveContainer>
-             ) : <p style={{ textAlign: 'center', color: 'var(--text-muted)' }}>No hay datos suficientes</p>}
+    <div className="reports-container animate-fade-in">
+      {/* Top Navigation */}
+      <div className="reports-nav">
+        <div className="nav-pill">Overview</div>
+        <div className="nav-pill">Clients</div>
+        <div className="nav-pill">Projects</div>
+        <div className="nav-pill">Inbox</div>
+        <div className="nav-pill active">Analytics</div>
+        <div style={{ marginLeft: 'auto' }}>
+          <div className="client-avatar">
+             <Plus size={16} />
           </div>
         </div>
       </div>
-      
-      <div className="chart-card" style={{ padding: '0', overflow: 'hidden' }}>
-        <h3 style={{ padding: '24px 24px 16px', margin: 0, borderBottom: '1px solid var(--border)' }}>Resumen Directivo Reciente</h3>
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-          <thead style={{ backgroundColor: 'var(--surface-hover)', borderBottom: '1px solid var(--border)' }}>
-            <tr>
-              <th style={{ padding: '16px', fontWeight: '600' }}>Segmento</th>
-              <th style={{ padding: '16px', fontWeight: '600' }}>Registros Totales</th>
-              <th style={{ padding: '16px', fontWeight: '600' }}>Principal Indicador</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr style={{ borderBottom: '1px solid var(--border)' }}>
-              <td style={{ padding: '16px', fontWeight: '500' }}>Clientes</td>
-              <td style={{ padding: '16px' }}>{data.clientes.length}</td>
-              <td style={{ padding: '16px', color: 'var(--success)' }}>{clientesActivos} Activos</td>
-            </tr>
-            <tr style={{ borderBottom: '1px solid var(--border)' }}>
-              <td style={{ padding: '16px', fontWeight: '500' }}>Oportunidades</td>
-              <td style={{ padding: '16px' }}>{data.oportunidades.length}</td>
-              <td style={{ padding: '16px', color: 'var(--primary)' }}>{oportunidadesAbiertas} Abiertas</td>
-            </tr>
-            <tr>
-              <td style={{ padding: '16px', fontWeight: '500' }}>Campañas</td>
-              <td style={{ padding: '16px' }}>{data.campanas.length}</td>
-              <td style={{ padding: '16px', color: 'var(--text-muted)' }}>Métricas pendientes</td>
-            </tr>
-          </tbody>
-        </table>
+
+      <div className="reports-main-grid">
+        {/* Main Content Column */}
+        <div className="main-content-col">
+          
+          {/* KPI Row */}
+          <div className="kpi-row">
+            <div className="report-kpi-card">
+              <div className="kpi-header">
+                <span className="kpi-label">Clients</span>
+                <span className="kpi-badge plus">+4</span>
+              </div>
+              <div className="kpi-value-row">
+                <span className="kpi-main-val">{totalClientes}</span>
+                <span className="kpi-subtext">Compare {clientComp} (last month)</span>
+              </div>
+            </div>
+
+            <div className="report-kpi-card">
+              <div className="kpi-header">
+                <span className="kpi-label">Revenue</span>
+                <span className="kpi-badge minus">-8%</span>
+              </div>
+              <div className="kpi-value-row">
+                <span className="kpi-main-val">${totalRevenue.toLocaleString()}</span>
+                <span className="kpi-subtext">{formatCurrency(revenueComp)} (last month)</span>
+              </div>
+            </div>
+
+            <div className="report-kpi-card">
+              <div className="kpi-header">
+                <span className="kpi-label">Projects</span>
+                <span className="kpi-badge plus">+6</span>
+              </div>
+              <div className="kpi-value-row">
+                <span className="kpi-main-val">{totalProjects}</span>
+                <span className="kpi-subtext">Compare {projectComp} (last month)</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Revenue Analytics Chart */}
+          <div className="report-section-card">
+            <div className="section-header">
+              <h3 className="section-title">Revenue Analytics</h3>
+              <div className="chart-legend">
+                <div className="legend-item"><span className="dot" style={{background: '#10B981'}}></span> Actual</div>
+                <div className="legend-item"><span className="dot" style={{background: '#E5E7EB'}}></span> AI Projected</div>
+              </div>
+              <div className="chart-controls">
+                <select className="control-select"><option>Earnings</option></select>
+                <select className="control-select"><option>Last 30 Days</option></select>
+                <button className="icon-btn" style={{border: 'none', background: 'none'}}><Search size={16}/></button>
+              </div>
+            </div>
+            
+            <div style={{ width: '100%', height: 300, display: 'flex', gap: '20px' }}>
+              <div style={{ width: '180px', fontSize: '0.8rem', color: '#6B7280', paddingTop: '20px' }}>
+                 <div style={{ background: '#F3F4F6', padding: '12px', borderRadius: '12px', marginBottom: '16px' }}>
+                    Better client communication can boost tips and repeat work. Try faster responses!
+                 </div>
+                 <button className="btn" style={{ background: 'linear-gradient(90deg, #6366F1 0%, #A5B4FC 100%)', color: 'white', borderRadius: '20px', fontSize: '0.75rem' }}>
+                    Run Analysis
+                 </button>
+              </div>
+              <div style={{ flex: 1 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                    <XAxis type="number" dataKey="x" name="day" hide />
+                    <YAxis type="number" dataKey="y" name="revenue" axisLine={false} tickLine={false} tick={{fill: '#9CA3AF', fontSize: 10}} />
+                    <ZAxis type="number" dataKey="z" range={[60, 400]} />
+                    <Tooltip cursor={{ strokeDasharray: '3 3' }} />
+                    <Scatter name="Actual" data={chartData}>
+                      {chartData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.x === 8 ? '#6366F1' : '#10B981'} fillOpacity={entry.x === 8 ? 1 : 0.4} />
+                      ))}
+                    </Scatter>
+                  </ScatterChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+
+          {/* Manage Projects Table */}
+          <div className="report-section-card">
+            <div className="section-header">
+              <h3 className="section-title">Manage Projects</h3>
+              <button className="icon-btn" style={{border: 'none', background: 'none'}}><Search size={18}/></button>
+            </div>
+            
+            <div className="project-tabs">
+              <button className={`tab-btn ${activeTab === 'Priority' ? 'active' : ''}`} onClick={() => setActiveTab('Priority')}>
+                Priority <span className="tab-count">3</span>
+              </button>
+              <button className="tab-btn">Active <span className="tab-count">4</span></button>
+              <button className="tab-btn">Completed</button>
+              <button className="tab-btn">Canceled</button>
+              <button className="tab-btn">Recommended <span className="tab-count">3</span></button>
+            </div>
+
+            <table className="report-table">
+              <thead>
+                <tr>
+                  <th>Client</th>
+                  <th>Task</th>
+                  <th>Note</th>
+                  <th>Duo on</th>
+                  <th>Price</th>
+                  <th>Status</th>
+                  <th>More</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.oportunidades.slice(0, 3).map((op, idx) => (
+                  <tr key={op.id}>
+                    <td>
+                      <div className="client-cell">
+                        <div className="client-avatar">{op.cliente_id ? 'C' : 'OP'}</div>
+                        <div>
+                          <div style={{fontWeight: 600}}>Client Name {idx + 1}</div>
+                          <div style={{fontSize: '0.7rem', color: '#9CA3AF'}}>@client.{idx}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <div style={{fontWeight: 600}}>{op.titulo}</div>
+                      <div style={{fontSize: '0.7rem', color: '#9CA3AF'}}>General Project Detail</div>
+                    </td>
+                    <td><Zap size={16} color="#E5E7EB"/></td>
+                    <td>Apr {idx + 1}</td>
+                    <td style={{fontWeight: 600}}>${op.valor}</td>
+                    <td>
+                      <span className={`status-tag ${op.estado === 'ganada' ? 'review' : 'progress'}`}>
+                        {op.estado === 'ganada' ? 'Done' : 'In Progress'}
+                      </span>
+                    </td>
+                    <td><MoreHorizontal size={18} color="#9CA3AF"/></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Sidebar Column */}
+        <div className="sidebar-col">
+          <div className="sidebar-section">
+            
+            <div className="priority-tasks">
+              <div className="section-header" style={{marginBottom: '16px'}}>
+                <h3 className="section-title">Priority tasks</h3>
+                <span style={{fontSize: '0.75rem', color: '#4F46E5', fontWeight: 600}}>See all</span>
+              </div>
+              
+              <div className="task-item">
+                <div className="task-icon-container"></div>
+                <div className="task-content">
+                  <h4>Follow-ups</h4>
+                  <div className="task-meta">
+                    <span><Calendar size={12}/> Apr 1</span>
+                    <span><Zap size={12}/> 3/4 completed</span>
+                  </div>
+                </div>
+                <ChevronRight size={18} style={{marginLeft: 'auto', color: '#E5E7EB'}}/>
+              </div>
+
+              <div className="task-item">
+                <div className="task-icon-container"></div>
+                <div className="task-content">
+                  <h4>Contract Review</h4>
+                  <div className="task-meta">
+                    <span><Calendar size={12}/> Apr 1</span>
+                    <span><Zap size={12}/> 1/2 completed</span>
+                  </div>
+                </div>
+                <ChevronRight size={18} style={{marginLeft: 'auto', color: '#E5E7EB'}}/>
+              </div>
+
+              <div className="task-item">
+                <div className="task-icon-container"></div>
+                <div className="task-content">
+                  <h4>Invoices</h4>
+                  <div className="task-meta">
+                    <span><Calendar size={12}/> Apr 2</span>
+                    <span><Zap size={12}/> 1/5 paid</span>
+                  </div>
+                </div>
+                <ChevronRight size={18} style={{marginLeft: 'auto', color: '#E5E7EB'}}/>
+              </div>
+            </div>
+
+            <div className="ai-help-card">
+               <div className="ai-header">
+                 <div style={{fontSize: '0.75rem', color: '#6B7280'}}>Hi, Adam 👋</div>
+                 <h3>How can I help you?</h3>
+               </div>
+
+               <div className="ai-options-grid">
+                  <div className="ai-option-btn">
+                    <MessageSquare size={16} color="#10B981"/>
+                    <span>Text Assistance</span>
+                  </div>
+                  <div className="ai-option-btn">
+                    <Zap size={16} color="#F59E0B"/>
+                    <span>Process Automation</span>
+                  </div>
+                  <div className="ai-option-btn">
+                    <Clock size={16} color="#6366F1"/>
+                    <span>Schedule Optimization</span>
+                  </div>
+                  <div className="ai-option-btn">
+                    <Zap size={16} color="#EC4899"/>
+                    <span>Smart Response</span>
+                  </div>
+               </div>
+
+               <div className="ai-input-wrapper">
+                 <input type="text" className="ai-input" placeholder="Ask something..." />
+                 <Send size={18} style={{position: 'absolute', right: 12, top: 12, color: '#9CA3AF'}} />
+               </div>
+            </div>
+
+          </div>
+        </div>
       </div>
     </div>
   );
 }
+
