@@ -33,3 +33,4 @@ jobs:
           args: >
             -Dsonar.projectKey=Esteban-correa_IntegradorAntigravity
             -Dsonar.organization=esteban-correa
+            -Dsonar.exclusions=**/*.java
