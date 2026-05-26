@@ -184,7 +184,7 @@ export default function Campanas() {
                     <span>Darlene Robertson</span> {/* Mocked Owner */}
                   </div>
                 </td>
-                <td style={{ fontWeight: 500 }}>$100.000</td> {/* Mocked Goal */}
+                <td style={{ fontWeight: 500 }}>$100.000 {/* Mocked Goal */}</td>
                 <td style={{ fontWeight: 500 }}>${formatCurrency(campana.presupuesto)}</td>
                 <td>
                   <div className="date-cell">
