@@ -96,16 +96,23 @@ export default function Usuarios() {
     }
   };
 
+  const handleKeyDown = (e, tabName) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      setActiveTab(tabName);
+    }
+  };
+
   if (isLoading) return <div className="users-container"><h2>Cargando Usuarios...</h2></div>;
 
   return (
     <div className="users-container animate-fade-in">
       {/* Top Nav Tabs */}
       <div className="users-top-nav">
-        <div className={`top-nav-item ${activeTab === 'All Users' ? 'active' : ''}`} role="button" tabIndex={0} onClick={() => setActiveTab('All Users')}>All Users</div>
-        <div className={`top-nav-item ${activeTab === 'Admins' ? 'active' : ''}`} role="button" tabIndex={0} onClick={() => setActiveTab('Admins')}>Admins</div>
-        <div className={`top-nav-item ${activeTab === 'Staff' ? 'active' : ''}`} role="button" tabIndex={0} onClick={() => setActiveTab('Staff')}>Staff</div>
-        <div className={`top-nav-item ${activeTab === 'Collaborators' ? 'active' : ''}`} role="button" tabIndex={0} onClick={() => setActiveTab('Collaborators')}>Collaborators</div>
+        <div className={`top-nav-item ${activeTab === 'All Users' ? 'active' : ''}`} role="button" tabIndex={0} onClick={() => setActiveTab('All Users')} onKeyDown={(e) => handleKeyDown(e, 'All Users')}>All Users</div>
+        <div className={`top-nav-item ${activeTab === 'Admins' ? 'active' : ''}`} role="button" tabIndex={0} onClick={() => setActiveTab('Admins')} onKeyDown={(e) => handleKeyDown(e, 'Admins')}>Admins</div>
+        <div className={`top-nav-item ${activeTab === 'Staff' ? 'active' : ''}`} role="button" tabIndex={0} onClick={() => setActiveTab('Staff')} onKeyDown={(e) => handleKeyDown(e, 'Staff')}>Staff</div>
+        <div className={`top-nav-item ${activeTab === 'Collaborators' ? 'active' : ''}`} role="button" tabIndex={0} onClick={() => setActiveTab('Collaborators')} onKeyDown={(e) => handleKeyDown(e, 'Collaborators')}>Collaborators</div>
       </div>
 
       {/* Header Section */}
