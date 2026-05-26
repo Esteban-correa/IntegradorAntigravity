@@ -2,12 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { reportesService } from '../api/reportesService';
 import { 
   Users, DollarSign, Briefcase, Plus, Search, MoreHorizontal, 
-  ChevronRight, Calendar, Sparkles, MessageSquare, Zap, Clock, Send 
+  ChevronRight, Calendar, Sparkles, MessageSquare, Zap, Clock, Send,
+  FileDown, FileSpreadsheet
 } from 'lucide-react';
 import { 
   ScatterChart, Scatter, XAxis, YAxis, ZAxis, Tooltip, 
   ResponsiveContainer, Cell 
 } from 'recharts';
+import jsPDF from 'jspdf';
+import * as XLSX from 'xlsx';
 import '../reports.css';
 
 export default function Reportes() {
@@ -70,6 +73,50 @@ export default function Reportes() {
     return Number(amount).toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 });
   };
 
+  const exportToPDF = () => {
+    const doc = new jsPDF();
+    
+    // Titulo
+    doc.setFontSize(20);
+    doc.text('Reporte General - LoopAI', 14, 22);
+    
+    // Resumen de KPIs
+    doc.setFontSize(14);
+    doc.text('Resumen de KPIs', 14, 35);
+    
+    doc.setFontSize(12);
+    doc.text(`Total Clientes: ${totalClientes}`, 14, 45);
+    doc.text(`Total Ingresos: $${totalRevenue.toLocaleString()}`, 14, 52);
+    doc.text(`Total Proyectos: ${totalProjects}`, 14, 59);
+
+    // Listado de Proyectos Recientes
+    doc.setFontSize(14);
+    doc.text('Proyectos Recientes', 14, 75);
+    
+    doc.setFontSize(10);
+    let yPos = 85;
+    data.oportunidades.slice(0, 15).forEach((op, index) => {
+      doc.text(`${index + 1}. ${op.titulo} - Estado: ${op.estado} - Valor: $${op.valor}`, 14, yPos);
+      yPos += 7;
+    });
+
+    doc.save('reporte_loopai.pdf');
+  };
+
+  const exportToExcel = () => {
+    const wsClientes = XLSX.utils.json_to_sheet(data.clientes);
+    const wsOportunidades = XLSX.utils.json_to_sheet(data.oportunidades);
+    const wsCampanas = XLSX.utils.json_to_sheet(data.campanas);
+
+    const wb = XLSX.utils.book_new();
+    
+    XLSX.utils.book_append_sheet(wb, wsClientes, "Clientes");
+    XLSX.utils.book_append_sheet(wb, wsOportunidades, "Oportunidades");
+    XLSX.utils.book_append_sheet(wb, wsCampanas, "Campañas");
+
+    XLSX.writeFile(wb, "reporte_loopai.xlsx");
+  };
+
   if (isLoading) return <div className="reports-container"><h2>Generando Reportes LoopAI...</h2></div>;
 
   return (
@@ -81,8 +128,14 @@ export default function Reportes() {
         <div className="nav-pill">Projects</div>
         <div className="nav-pill">Inbox</div>
         <div className="nav-pill active">Analytics</div>
-        <div style={{ marginLeft: 'auto' }}>
-          <div className="client-avatar">
+        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <button className="btn" onClick={exportToPDF} style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#EF4444', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.875rem', fontWeight: '500' }}>
+            <FileDown size={16} /> PDF
+          </button>
+          <button className="btn" onClick={exportToExcel} style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#10B981', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.875rem', fontWeight: '500' }}>
+            <FileSpreadsheet size={16} /> Excel
+          </button>
+          <div className="client-avatar" style={{marginLeft: '4px'}}>
              <Plus size={16} />
           </div>
         </div>
