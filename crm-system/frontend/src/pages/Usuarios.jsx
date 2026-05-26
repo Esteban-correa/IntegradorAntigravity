@@ -1,15 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { usuariosService } from '../api/usuariosService';
 import { 
-  Plus, Search, MoreHorizontal, ChevronLeft, ChevronRight, 
-  User, Shield, Mail, CheckCircle, XCircle 
+  Plus, Search, ChevronLeft, ChevronRight 
 } from 'lucide-react';
 import '../users.css';
 
 export default function Usuarios() {
   const [usuarios, setUsuarios] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [errorMsg, setErrorMsg] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('All Users');
 
@@ -32,7 +30,7 @@ export default function Usuarios() {
       const data = await usuariosService.getUsuarios();
       setUsuarios(data || []);
     } catch (err) {
-      setErrorMsg("Error cargando usuarios: " + err.message);
+      console.error("Error cargando usuarios:", err);
     } finally {
       setIsLoading(false);
     }
@@ -104,10 +102,10 @@ export default function Usuarios() {
     <div className="users-container animate-fade-in">
       {/* Top Nav Tabs */}
       <div className="users-top-nav">
-        <div className={`top-nav-item ${activeTab === 'All Users' ? 'active' : ''}`} onClick={() => setActiveTab('All Users')}>All Users</div>
-        <div className={`top-nav-item ${activeTab === 'Admins' ? 'active' : ''}`} onClick={() => setActiveTab('Admins')}>Admins</div>
-        <div className={`top-nav-item ${activeTab === 'Staff' ? 'active' : ''}`} onClick={() => setActiveTab('Staff')}>Staff</div>
-        <div className={`top-nav-item ${activeTab === 'Collaborators' ? 'active' : ''}`} onClick={() => setActiveTab('Collaborators')}>Collaborators</div>
+        <div className={`top-nav-item ${activeTab === 'All Users' ? 'active' : ''}`} role="button" tabIndex={0} onClick={() => setActiveTab('All Users')}>All Users</div>
+        <div className={`top-nav-item ${activeTab === 'Admins' ? 'active' : ''}`} role="button" tabIndex={0} onClick={() => setActiveTab('Admins')}>Admins</div>
+        <div className={`top-nav-item ${activeTab === 'Staff' ? 'active' : ''}`} role="button" tabIndex={0} onClick={() => setActiveTab('Staff')}>Staff</div>
+        <div className={`top-nav-item ${activeTab === 'Collaborators' ? 'active' : ''}`} role="button" tabIndex={0} onClick={() => setActiveTab('Collaborators')}>Collaborators</div>
       </div>
 
       {/* Header Section */}
@@ -203,8 +201,9 @@ export default function Usuarios() {
             <h3 style={{ marginBottom: '24px', fontSize: '1.25rem', fontWeight: 700 }}>{isEditing ? 'Edit User' : 'Create New User'}</h3>
             <form onSubmit={handleSubmit}>
               <div style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.875rem', fontWeight: 600 }}>Full Name</label>
+                <label htmlFor="nombre" style={{ display: 'block', marginBottom: '8px', fontSize: '0.875rem', fontWeight: 600 }}>Full Name</label>
                 <input 
+                  id="nombre"
                   type="text" 
                   value={formData.nombre} 
                   className="ai-input"
@@ -214,8 +213,9 @@ export default function Usuarios() {
                 />
               </div>
               <div style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.875rem', fontWeight: 600 }}>Email Address</label>
+                <label htmlFor="email" style={{ display: 'block', marginBottom: '8px', fontSize: '0.875rem', fontWeight: 600 }}>Email Address</label>
                 <input 
+                  id="email"
                   type="email" 
                   value={formData.email} 
                   className="ai-input"
@@ -225,11 +225,12 @@ export default function Usuarios() {
                 />
               </div>
               <div style={{ marginBottom: '24px' }}>
-                <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.875rem', fontWeight: 600 }}>Role</label>
+                <label htmlFor="rol_id" style={{ display: 'block', marginBottom: '8px', fontSize: '0.875rem', fontWeight: 600 }}>Role</label>
                 <select 
+                   id="rol_id"
                    value={formData.rol_id}
                    style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #E5E7EB', background: 'white' }}
-                   onChange={(e) => setFormData({...formData, rol_id: parseInt(e.target.value)})}
+                   onChange={(e) => setFormData({...formData, rol_id: Number.parseInt(e.target.value)})}
                 >
                   <option value={1}>Administrator</option>
                   <option value={2}>Staff / User</option>

@@ -30,8 +30,9 @@ export default function Login() {
         {errorMsg && <div style={{color: 'red', marginBottom: '1rem'}}>{errorMsg}</div>}
         <form onSubmit={handleLogin}>
           <div className="form-group">
-            <label>Email Address</label>
+            <label htmlFor="email">Email Address</label>
             <input
+              id="email"
               type="email"
               placeholder="admin@crm.local"
               value={email}
@@ -40,8 +41,9 @@ export default function Login() {
             />
           </div>
           <div className="form-group">
-            <label>Password</label>
+            <label htmlFor="password">Password</label>
             <input
+              id="password"
               type="password"
               placeholder="••••••••"
               value={password}

@@ -30,8 +30,9 @@ export default function Register() {
         {successMsg && <div className="success-message" style={{color: 'green', marginBottom: '1rem'}}>{successMsg}</div>}
         <form onSubmit={handleRegister}>
           <div className="form-group">
-            <label>Correo Electrónico</label>
+            <label htmlFor="email">Correo Electrónico</label>
             <input
+              id="email"
               type="email"
               placeholder="tu@email.com"
               value={email}
@@ -40,8 +41,9 @@ export default function Register() {
             />
           </div>
           <div className="form-group">
-            <label>Contraseña</label>
+            <label htmlFor="password">Contraseña</label>
             <input
+              id="password"
               type="password"
               placeholder="••••••••"
               value={password}

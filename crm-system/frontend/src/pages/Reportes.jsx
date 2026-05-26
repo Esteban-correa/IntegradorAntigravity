@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { reportesService } from '../api/reportesService';
 import { 
-  Users, DollarSign, Briefcase, Plus, Search, MoreHorizontal, 
-  ChevronRight, Calendar, Sparkles, MessageSquare, Zap, Clock, Send,
+  Plus, Search, MoreHorizontal, 
+  ChevronRight, Calendar, MessageSquare, Zap, Clock, Send,
   FileDown, FileSpreadsheet
 } from 'lucide-react';
 import { 
@@ -213,8 +213,8 @@ export default function Reportes() {
                     <ZAxis type="number" dataKey="z" range={[60, 400]} />
                     <Tooltip cursor={{ strokeDasharray: '3 3' }} />
                     <Scatter name="Actual" data={chartData}>
-                      {chartData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.x === 8 ? '#6366F1' : '#10B981'} fillOpacity={entry.x === 8 ? 1 : 0.4} />
+                      {chartData.map((entry) => (
+                        <Cell key={`cell-${entry.x}`} fill={entry.x === 8 ? '#6366F1' : '#10B981'} fillOpacity={entry.x === 8 ? 1 : 0.4} />
                       ))}
                     </Scatter>
                   </ScatterChart>

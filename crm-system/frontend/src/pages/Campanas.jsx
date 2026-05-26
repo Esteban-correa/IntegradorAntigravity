@@ -1,15 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { campanasService } from '../api/campanasService';
 import { 
-  Plus, Search, Calendar, ChevronDown, MoreHorizontal, 
-  ChevronLeft, ChevronRight, Filter, Columns 
+  Search, Calendar, ChevronDown, 
+  ChevronLeft, ChevronRight, Columns 
 } from 'lucide-react';
 import '../campaigns.css';
 
 export default function Campanas() {
   const [campanas, setCampanas] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [errorMsg, setErrorMsg] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   
   // Modal State for CRUD
@@ -32,7 +31,7 @@ export default function Campanas() {
       const data = await campanasService.getCampanas();
       setCampanas(data || []);
     } catch (err) {
-      setErrorMsg("Error cargando campañas: " + err.message);
+      console.error("Error cargando campañas:", err);
     } finally {
       setIsLoading(false);
     }
@@ -94,7 +93,7 @@ export default function Campanas() {
     return Number(amount).toLocaleString('en-US', {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0
-    }).replace(/,/g, '.'); // Match screenshot dot separator $10.000
+    }).replaceAll(',', '.'); // Match screenshot dot separator $10.000
   };
 
   const formatDate = (dateString) => {
@@ -223,8 +222,9 @@ export default function Campanas() {
             <h3 style={{ marginBottom: '24px' }}>{isEditing ? 'Editar Campaña' : 'Nueva Campaña'}</h3>
             <form onSubmit={handleSubmit}>
               <div className="form-group" style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>Nombre</label>
+                <label htmlFor="nombre" style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>Nombre</label>
                 <input 
+                  id="nombre"
                   type="text" 
                   value={formData.nombre} 
                   className="ai-input"
@@ -233,8 +233,9 @@ export default function Campanas() {
                 />
               </div>
               <div className="form-group" style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>Presupuesto</label>
+                <label htmlFor="presupuesto" style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>Presupuesto</label>
                 <input 
+                  id="presupuesto"
                   type="number" 
                   value={formData.presupuesto} 
                   className="ai-input"
@@ -243,8 +244,9 @@ export default function Campanas() {
                 />
               </div>
               <div className="form-group" style={{ marginBottom: '24px' }}>
-                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>Fecha Inicio</label>
+                <label htmlFor="fecha_inicio" style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>Fecha Inicio</label>
                 <input 
+                  id="fecha_inicio"
                   type="date" 
                   value={formData.fecha_inicio} 
                   className="ai-input"
